@@ -16,7 +16,7 @@ const (
 	divertHeaderCtxKey = divertHeaderKey(DivertHeaderName)
 )
 
-// FromContext provides the divert header values stored in context.
+// FromContext provides the divert header value stored in context.
 func FromContext(ctx context.Context) string {
 	if v := ctx.Value(divertHeaderCtxKey); v != nil {
 		val, _ := v.(string)
@@ -37,8 +37,18 @@ func FromHeaders(r *http.Request) string {
 func InjectDivertHeader() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctx := context.WithValue(r.Context(), divertHeaderCtxKey, r.Header.Get(DivertHeaderName))
+			ctx := AddToContext(r.Context(), r.Header.Get(DivertHeaderName))
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
+}
+
+func AddToContext(ctx context.Context, value string) context.Context {
+	return context.WithValue(ctx, divertHeaderCtxKey, value)
+}
+
+// SetHeader sets the okteto divert header and value from context into the
+// provided request.
+func SetHeader(ctx context.Context, r *http.Request) {
+	r.Header.Set(DivertHeaderName, FromContext(ctx))
 }
