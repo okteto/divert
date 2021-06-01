@@ -2,6 +2,8 @@ package divert
 
 import (
 	"context"
+	"io"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -60,4 +62,16 @@ func TestInjectDivertHeader(t *testing.T) {
 
 	}))
 	h.ServeHTTP(httptest.NewRecorder(), r)
+}
+
+func ExampleInjectDivertHeader() {
+	appHandler := func(w http.ResponseWriter, _ *http.Request) {
+		io.WriteString(w, "This is your application's handler\n")
+	}
+
+	injectionHandler := InjectDivertHeader()
+
+	http.Handle("/", injectionHandler(http.HandlerFunc(appHandler)))
+
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
